@@ -17,17 +17,20 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Download Gradle wrapper jar
+      - name: Fix gradlew
         run: |
-          mkdir -p gradle/wrapper
           curl -sL "https://raw.githubusercontent.com/gradle/gradle/v8.4.0/gradle/wrapper/gradle-wrapper.jar" \
             -o gradle/wrapper/gradle-wrapper.jar
-
-      - name: Make gradlew executable
-        run: chmod +x gradlew
+          cat > gradlew << 'EOF'
+          #!/bin/sh
+          APP_HOME="$(cd "$(dirname "$0")" && pwd)"
+          CLASSPATH="$APP_HOME/gradle/wrapper/gradle-wrapper.jar"
+          exec java -classpath "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "$@"
+          EOF
+          chmod +x gradlew
 
       - name: Build Release APK
-        run: ./gradlew assembleRelease --no-daemon --stacktrace
+        run: ./gradlew assembleRelease --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
